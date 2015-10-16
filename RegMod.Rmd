@@ -1,0 +1,78 @@
+---
+title: "Influence of transmission type on MPG"
+output: pdf_document
+geometry: margin=1.5cm
+---
+Executive summary
+-------------
+There is a statistically significant difference between mpg values for different types of transmission. Analysis based on linear models shows that automatic transmission gives 2.9358 more miles per gallon comparing to manual transmission.
+
+Exploratory analysis
+------------------------
+Loading data
+```{r}
+library(datasets)
+data(mtcars)
+
+mtcars$am<-factor(mtcars$am)
+```
+We see on graph (Appendix 1) considerable difference among mpg means for two types of transmission.
+Let's see if this difference is statisitically significant.
+```{r}
+fit<-lm(mpg~am, mtcars)
+summary(fit)
+```
+Intercept here represents manual transmission, while automatic gives significant (at p-value<0.05) increase.
+But this model explains only 36% of variance, besides chances are the coefficient we get is not true because of the hidden correlated variables. So we gonna add some predictors to the model.
+
+Regression analysis
+-------------------
+Let's begin adding all the variables as regressors.
+```{r}
+fit<-lm(mpg~., mtcars)
+summary(fit)$coef
+```
+Now we'll be removing predictors one by one according to the highest p-values until we get meaningful model.
+```{r}
+fit<-lm(mpg~.-cyl, mtcars)
+fit<-lm(mpg~.-cyl-vs, mtcars)
+fit<-lm(mpg~.-cyl-vs-gear, mtcars)
+fit<-lm(mpg~.-cyl-vs-gear-carb, mtcars)
+fit<-lm(mpg~.-cyl-vs-gear-carb-drat, mtcars)
+fit<-lm(mpg~.-cyl-vs-gear-carb-drat-disp, mtcars)
+fit<-lm(mpg~.-cyl-vs-gear-carb-drat-disp-hp, mtcars)
+summary(fit)
+```
+Now we have model with wt, qsec and am as regressors, wich explains about 85% of variance.
+We see that automatic transmission gives now 2.9358 increase in mpg with other predictors keeping fixed.
+
+Residuals and outliers diagnostics
+---------------------------
+On the residuals plot (Appendix 2) we see no pattern, residuals are approximately identically distributed above and below 0, which means our model is quite good.
+On the leverage vs residuals plot (Appendix 3) we see no signifaicant leverage for any point in our data, which means outliers don't have much influence on our model.
+
+Appendix 1
+--------------
+```{r}
+library(ggplot2)
+g<-ggplot(mtcars, aes(x=factor(am), y=mpg, fill=factor(am)))+
+geom_violin()+
+xlab("Type of transmission")+ylab("MPG")+
+geom_abline(intercept=mean(mtcars$mpg[mtcars$am==0]), slope=0, size=2)+
+geom_abline(intercept=mean(mtcars$mpg[mtcars$am==1]), slope=0, size=2)
+g
+```
+\newpage 
+
+Appendix 2
+--------------
+```{r}
+plot(fit,which=1)
+```
+\newpage
+
+Appendix 3
+--------------
+```{r}
+plot(fit,which=5)
+```
